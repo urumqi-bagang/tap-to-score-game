@@ -233,6 +233,7 @@ body {
 
 .footer-link {
     font-size: 0.7rem;
+    padding-left: 10%;
 }
 
 .footer-link:hover {
