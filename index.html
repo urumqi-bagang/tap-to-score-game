@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tap-to-Score Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="score">Score: <span id="scoreValue">0</span></div>
+        <div id="highScore">High Score: <span id="highScoreValue">0</span></div>
+        <button id="startButton">Start Game</button>
+        <div id="gameOver" style="display: none;">
+            <h2>Game Over!</h2>
+            <p>Score: <span id="finalScore">0</span></p>
+            <button id="restartButton">Restart</button>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
