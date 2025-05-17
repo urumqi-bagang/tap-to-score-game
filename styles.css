@@ -217,4 +217,26 @@ body {
     .icon {
         font-size: 0.9rem;
     }
+    .footer-link {
+        font-size: 0.75rem;
+        padding: 3px 6px;
+    }
+}
+
+#footer {
+    width: 100%;
+    max-width: 400px;
+    text-align: right;
+    margin-bottom: 8px;
+    z-index: 10;
+}
+
+.footer-link {
+    font-size: 0.85rem;
+    padding: 4px 8px;
+    background: rgba(16, 185, 129, 0.5);
+}
+
+.footer-link:hover {
+    background: rgba(16, 185, 129, 0.7);
 }
