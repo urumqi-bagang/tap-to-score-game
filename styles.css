@@ -226,17 +226,21 @@ body {
 #footer {
     width: 100%;
     max-width: 400px;
-    text-align: right;
+    text-align: left;
     margin-bottom: 8px;
     z-index: 10;
 }
 
 .footer-link {
-    font-size: 0.85rem;
-    padding: 4px 8px;
-    background: rgba(16, 185, 129, 0.5);
+    font-size: 0.7rem;
 }
 
 .footer-link:hover {
     background: rgba(16, 185, 129, 0.7);
+}
+
+.copyright {
+    font-size: 0.7rem;
+    color: #ffffff;
+    margin-left: 8px;
 }
