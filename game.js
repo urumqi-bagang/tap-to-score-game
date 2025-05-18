@@ -77,14 +77,14 @@ function playTapSound() {
     }
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
-    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+    oscillator.type = 'triangle'; // Still smooth, but you could try 'triangle'
+    oscillator.frequency.setValueAtTime(400, audioCtx.currentTime); // Deeper pitch
+    gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); // Louder
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); // Longer fade
     oscillator.connect(gainNode);
     gainNode.connect(audioCtx.destination);
     oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 0.1);
+    oscillator.stop(audioCtx.currentTime + 0.3); // Match fade duration
 }
 
 const scoreElement = document.getElementById('scoreValue');
