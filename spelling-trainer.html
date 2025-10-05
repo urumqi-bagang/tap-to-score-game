@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelling Bee Trainer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+        #wordDisplay {
+            font-size: 24px;
+            margin: 20px 0;
+            color: #2196F3;
+        }
+        #spellInput {
+            width: 80%;
+            padding: 10px;
+            font-size: 18px;
+            margin-bottom: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        #startBatchBtn {
+            background: #FF9800;
+            color: white;
+        }
+        #startBatchBtn:hover {
+            background: #F57C00;
+        }
+        #speakBtn {
+            background: #FF9800;
+            color: white;
+        }
+        #speakBtn:hover {
+            background: #F57C00;
+        }
+        #checkBtn {
+            background: #4CAF50;
+            color: white;
+        }
+        #checkBtn:hover {
+            background: #388E3C;
+        }
+        #nextBatchBtn {
+            background: #2196F3;
+            color: white;
+            display: none;
+        }
+        #nextBatchBtn:hover {
+            background: #1976D2;
+        }
+        #resetBtn {
+            background: #f44336;
+            color: white;
+        }
+        #resetBtn:hover {
+            background: #d32f2f;
+        }
+        #voiceSelect {
+            padding: 5px;
+            margin: 5px;
+            font-size: 14px;
+        }
+        #feedback {
+            font-size: 20px;
+            margin: 15px 0;
+            height: 60px;
+        }
+        .emoji {
+            font-size: 30px;
+            margin-top: 10px;
+        }
+        #progress {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        #stats {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        #batchResults {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #333;
+            white-space: pre-wrap;
+        }
+        #ttsStatus {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Spelling Bee Trainer</h1>
+        <p>Train in batches of 50 words. Start a batch to begin!</p>
+        <div id="wordDisplay">Press "Start Batch" to begin.</div>
+        <select id="voiceSelect" style="display: none;">
+            <option value="">Auto-select voice</option>
+        </select>
+        <div id="ttsStatus"></div>
+        <input type="text" id="spellInput" placeholder="Type the spelling here..." autofocus>
+        <br>
+        <button id="startBatchBtn">Start Batch</button>
+        <button id="speakBtn" style="display: none;">Repeat Word</button>
+        <button id="checkBtn" style="display: none;">Check Spelling</button>
+        <button id="nextBatchBtn">Next Batch</button>
+        <button id="resetBtn">Reset Progress</button>
+        <div id="feedback"></div>
+        <div class="emoji" id="emoji"></div>
+        <div id="batchResults"></div>
+        <div id="progress"></div>
+        <div id="stats"></div>
+    </div>
+
+    <script>
+        // Updated word list (provided by user, normalized to lowercase)
+        const allWords = [
+            "aardvark", "abolish", "abrupt", "abstract", "accomplice", "accumulate", "accusation", "achievement", "acquittal",
+            "acreage", "admonish", "adobe", "adroit", "ailment", "alfalfa", "almond", "allow", "aloud", "amount", "angle",
+            "ambulance", "analyze", "ancestor", "ancient", "angry", "answer", "anthem", "antler", "antelope", "antenna",
+            "antique", "anxious", "anvil", "apex", "appeal", "apple", "apathy", "apology", "apparel", "appetite", "application",
+            "aptitude", "archery", "architecture", "arduous", "argue", "armadillo", "arrangement", "area", "army", "around",
+            "arrest", "arrogance", "artificial", "assembly", "assistance", "arson", "artist", "asleep", "assume", "athletic",
+            "atmosphere", "attentive", "attorney", "attend", "attract", "avid", "award", "audience", "autograph", "autumn",
+            "avarice", "bachelor", "baffle", "bailiff", "bairn", "bagel", "baggage", "bakery", "balance", "baleen",
+            "ballistics", "ballot", "balloon", "banana", "banjo", "banner", "baloney", "banquet", "bargain", "barometer",
+            "barely", "basket", "battle", "beacon", "barracks", "barrier", "believe", "benefactor", "beautiful", "behave",
+            "between", "bicycle", "benefit", "betrayal", "biography", "bison", "bigger", "birth", "birthday", "biscuit",
+            "bitter", "blade", "bland", "blaze", "blanch", "blarney", "blatant", "blunderbuss", "board", "both", "bother",
+            "bottle", "bolster", "bonanza", "boundary", "bravery", "bottom", "braid", "bread", "breeze", "breathe", "brought",
+            "bruise", "bulletin", "bridge", "broil", "brother", "bubble", "bugle", "butter", "button", "buoyancy", "burglar",
+            "butcher", "cafeteria", "cabbage", "cactus", "camera", "camp", "calcium", "calculator", "calendar", "calorie",
+            "canary", "candor", "canine", "canister", "canteen", "caprice", "carcass", "cardiac", "career", "carnival",
+            "cascade", "cashew", "casket", "category", "caught", "cemetery", "certain", "chafe", "chance", "change",
+            "changeable", "chocolate", "chorus", "chronic", "charm", "cheek", "chicken", "children", "choice", "cider",
+            "clench", "client", "circuit", "cistern", "citizen", "citrus", "clamor", "classical", "cleaver", "closet",
+            "climate", "climb", "close", "clothing", "clout", "clumsy", "clutch", "coarse", "clown", "cluster", "coach",
+            "combat", "cobalt", "coconut", "colander", "college", "commanding", "commission", "community", "comet", "comfort",
+            "complain", "contain", "compartment", "concession", "condolence", "conference", "congress", "consequence",
+            "considerable", "constraint", "contamination", "cornea", "corporation", "costume", "control", "corner", "cotton",
+            "cozy", "council", "counsel", "couplet", "coupon", "courier", "course", "courtesy", "covenant", "covert",
+            "cowardice", "cowl", "crafty", "crack", "crate", "crave", "crawl", "crazy", "creak", "creation", "credible",
+            "creativity", "credential", "creditor", "crisis", "cremate", "crisp", "crown", "crude", "criteria", "criticism",
+            "crocodile", "crusade", "cruel", "crust", "crutch", "cuddle", "crutches", "cryptic", "crystal", "cuisine",
+            "cultivation", "cumulus", "cushion", "custody", "current", "dairy", "dampen", "dance", "customary", "cuticle",
+            "cyclone", "daisy", "darling", "dash", "data", "daughter", "daunt", "dawn", "dazzle", "dealt", "debate", "delay",
+            "desert", "deserve", "deceit", "deceitful", "decimal", "decoration", "decorum", "definite", "delegate",
+            "denominator", "density", "dependent", "desolate", "determination", "design", "diary", "difficult", "diner",
+            "diamond", "dictionary", "dignity", "dilate", "dilemma", "dilute", "diminish", "dimple", "dinghy", "dinosaur",
+            "discipline", "distinction", "dire", "discover", "disease", "dismal", "dispute", "disturb", "divan", "divine",
+            "division", "dogma", "doldrums", "dolphin", "docket", "doctor", "dodge", "dollar", "dragon", "dream", "drift",
+            "drool", "drought", "duct", "dungeon", "duplicity", "duress", "dwell", "eager", "earnest", "earth", "echo",
+            "elect", "equal", "eccentric", "eclipse", "ecology", "economy", "eerie", "efface", "effective", "egotism",
+            "elastic", "elate", "electron", "eligible", "embarrass", "emblem", "emerald", "employee", "endeavor", "engineer",
+            "enormous", "entice", "environmental", "equator", "erosion", "eruption", "excellent", "factory", "faint",
+            "fairground", "experience", "exterior", "extraordinary", "extreme", "faucet", "fault", "favorite", "fawn",
+            "fauna", "federation", "fertilize", "flamingo", "feather", "fence", "fervor", "fever", "fiction", "field",
+            "fiery", "finger", "finish", "flavor", "fleet", "flesh", "flammable", "fleece", "flexible", "flimsy", "flippant",
+            "fluency", "foliage", "foreign", "flock", "flower", "follow", "fortune", "foreman", "forfeit", "forgery",
+            "fortress", "forty", "forward", "fossil", "foul", "fowl", "foyer", "fraction", "frail", "fracas", "fragrance",
+            "fraud", "frightening", "frame", "fresh", "fret", "frill", "frock", "frost", "froth", "frown", "frontier",
+            "frugal", "functional", "funeral", "fruit", "fungus", "future", "gale", "gasp", "gelatin", "general", "genius",
+            "geometry", "geyser", "gigantic", "giraffe", "glacier", "glossary", "gnarled", "gnaw", "glitz", "gloat", "gloomy",
+            "glower", "gnash", "gobble", "goblin", "gooey", "gorilla", "gossip", "gracious", "goofy", "gorge", "gout",
+            "gown", "graduation", "graft", "granary", "granular", "graphic", "gratuity", "grief", "guardian", "grocer",
+            "grove", "growth", "guard", "guest", "gym", "hamster", "happen", "habitat", "hatchet", "heredity", "hesitate",
+            "harbor", "harden", "hare", "harmony", "harpoon", "harsh", "hawk", "hazel", "hazy", "headlight", "heal",
+            "hidden", "history", "hitch", "homework", "honor", "hour", "however", "howl", "hula", "human", "hurl", "illness",
+            "image", "humorous", "hurrah", "hustle", "hybrid", "hydrant", "hyena", "hyphen", "hypnotist", "illusion",
+            "immediate", "immigrant", "imperfection", "impact", "important", "indent", "issue", "impertinence", "incisor",
+            "incubator", "influence", "inheritance", "inhibition", "inscribe", "interrupt", "interview", "irrational",
+            "island", "jacket", "italics", "itch", "item", "ivy", "jaguar", "janitor", "jaunty", "javelin", "jiggle",
+            "jockey", "joyful", "jittery", "journal", "justify", "kidnap", "juice", "jungle", "kindness", "kinship",
+            "kiosk", "kitchen", "knee", "knell", "knight", "knob", "know", "knickers", "koala", "laceration", "lament",
+            "labor", "lantern", "larva", "laugh", "latitude", "launch", "laundry", "lecture", "lawyer", "leader", "least",
+            "ledge", "legal", "lentil", "lettuce", "level", "limb", "listen", "locust", "lodge", "loft", "loiter", "loll",
+            "lonely", "loose", "loot", "lotus", "lounge", "lout", "loyal", "lucid", "lubricate", "luminous", "lumber",
+            "lunch", "luxury", "mafia", "major", "mallet", "magician", "malign", "manacle", "marriage", "marble", "market",
+            "maven", "mellow", "mattress", "measure", "merchant", "mermaid", "memory", "mention", "method", "middle", "mesa",
+            "metallic", "mileage", "militia", "million", "minute", "mirror", "mission", "miniature", "minority", "moderation",
+            "modesty", "moist", "moonlight", "motto", "mound", "molar", "molasses", "mollusk", "monarch", "morale",
+            "mournful", "multiply", "mundane", "mouse", "movable", "mumble", "myself", "munitions", "muscular", "musician",
+            "mustache", "mutilate", "mystical", "mythology", "naughty", "narrow", "native", "needle", "newspaper", "nausea",
+            "navigation", "nebula", "nematode", "nemesis", "neonate", "nephew", "neutralize", "niche", "nocuous", "nominee",
+            "notary", "north", "notation", "notch", "notice", "notion", "novel", "nozzle", "nudge", "novice", "nucleus",
+            "nuisance", "numerator", "null", "numb", "number", "nurse", "nutrition", "oath", "obedient", "oblige",
+            "oblivion", "obscene", "obscure", "obstinate", "obvious", "occasion", "occupation", "octagon", "octave",
+            "offend", "office", "often", "odious", "ominous", "opportunity", "oppressive", "olive", "omit", "ooze", "opera",
+            "operate", "opponent", "oppose", "opus", "oral", "orange", "organ", "ounce", "oration", "orchid", "ordain",
+            "ordeal", "orphan", "ovation", "parachute", "parakeet", "palace", "panel", "panic", "pansy", "parallel",
+            "parasite", "parlor", "parochial", "passion", "payment", "pear", "pebble", "pavilion", "peculiar", "performance",
+            "perimeter", "penalty", "pencil", "pension", "people", "persuade", "pertinent", "phrase", "piano", "picnic",
+            "picture", "plane", "planet", "pigeon", "pioneer", "pious", "plague", "platform", "plenty", "pliers", "plot",
+            "platitude", "plaza", "pliable", "poetry", "pluck", "plume", "plunder", "ply", "podium", "polite", "pollen",
+            "porch", "pollute", "porridge", "portrait", "possess", "position", "possible", "potent", "pound", "possum",
+            "potency", "poverty", "prairie", "power", "prepare", "pressure", "pretzel", "precaution", "predator",
+            "predicament", "premiere", "presage", "pretense", "principal", "probe", "primary", "prize", "proud", "province",
+            "protein", "provoke", "prowl", "prune", "pry", "public", "pulley", "pulp", "pumpkin", "punctual", "punish",
+            "purple", "pursuit", "quantity", "quarrel", "quay", "quest", "question", "quiet", "quit", "quite", "quiver",
+            "rabbit", "radiant", "quotient", "radiance", "radioactive", "raiment", "radio", "radius", "raft", "railroad",
+            "raise", "rally", "rancid", "ransom", "raptor", "rascal", "reach", "receive", "reconcile", "referee", "regulation",
+            "reign", "reinforce", "relapse", "relevant", "reliable", "rejoice", "rescue", "retina", "ribbon", "reluctant",
+            "remedial", "reminder", "remodel", "rendition", "replenish", "residence", "resilient", "resolution", "respectfully",
+            "restaurant", "restoration", "rhyme", "rivalry", "rough", "royalty", "riddle", "ridge", "rifle", "rift", "rigid",
+            "rotten", "royal", "rubbish", "ruffle", "runt", "rupture", "sadness", "safely", "sauce", "sauna", "savage",
+            "salve", "satellite", "savannah", "saxophone", "scald", "scandal", "scanty", "school", "scrimmage", "secretary",
+            "seize", "scream", "screen", "script", "season", "severe", "shampoo", "shelter", "shepherd", "sheen", "shield",
+            "shiny", "shipwreck", "shoat", "shrewd", "shyster", "shirk", "shock", "shore", "shrug", "sidewalk", "sign",
+            "silent", "silt", "simmer", "singe", "sinus", "siren", "simulate", "singularity", "sinister", "sirloin", "smoke",
+            "smooth", "smug", "snatch", "snide", "solid", "solution", "someone", "solemn", "somersault", "soprano",
+            "speculation", "sore", "sour", "source", "spare", "sparkle", "spicy", "sponge", "spool", "spout", "sprig",
+            "spurt", "squeal", "squawk", "stadium", "stagnant", "stallion", "starve", "state", "station", "stench",
+            "sticky", "stillness", "strange", "stream", "subtraction", "suffix", "summary", "superb", "sunlight", "suppose",
+            "swallow", "swift", "surgeon", "sweater", "syllable", "symbol", "synonym", "tapestry", "taut", "tawdry",
+            "teacher", "telephone", "therefore", "thrash", "telescope", "temperature", "thermostat", "thesis", "thoughtless",
+            "thousand", "thrive", "throne", "toast", "tolerable", "topaz", "tooth", "torpedo", "torrid", "tortuous",
+            "toxin", "touch", "toward", "traffic", "tragic", "transmission", "transparent", "travel", "tremor", "trespass",
+            "trickery", "trophy", "trough", "truly", "trumpet", "trust", "turtle", "tweezers", "twice", "twilight", "twinge",
+            "twinkle", "twirlers", "twist", "tycoon", "typhoid", "typhoon", "typify", "tyrant", "ultrasonic", "umbilical",
+            "understand", "uniformity", "unify", "unison", "upheaval", "urbane", "urchin", "usher", "usurp", "utility",
+            "utmost", "utopian", "utter", "vacancy", "vacation", "vagrant", "valiant", "valley", "value", "valve", "vanilla",
+            "vanity", "vanquish", "vapor", "vaporize", "variant", "varnish", "vast", "vault", "veal", "vendor", "veneer",
+            "venom", "venomous", "verbal", "verge", "verve", "vessel", "veto", "vial", "vibrate", "vibration", "vicar",
+            "vicinity", "victor", "villain", "violation", "virtue", "virus", "visionary", "visitor", "vitamin", "volcano",
+            "volunteer", "vowel", "waffle", "wallet", "waltz", "wander", "warbler", "warranty", "watermelon", "wealth",
+            "weary", "weather", "weigh", "weird", "welcome", "wharf", "whiff", "whimper", "windshield", "winnow", "wizard",
+            "woodland", "woolen", "worrisome", "worry", "worsen", "worth", "wrath", "wreath", "wreck", "wrestler",
+            "wretched", "wrinkle", "wrist", "write", "wrong", "wrung", "yacht", "yearn", "yeast", "yeoman", "yesterday",
+            "yoga", "yogurt", "yowl", "yucky", "zany", "zeal", "zenith", "zinc", "zinnia", "zone", "zucchini"
+        ];
+
+        // Word scores: higher = harder
+        let wordScores = {};
+        allWords.forEach(word => {
+            wordScores[word] = 0;
+        });
+
+        // Load from localStorage
+        if (localStorage.getItem('spellingBeeScores')) {
+            wordScores = JSON.parse(localStorage.getItem('spellingBeeScores'));
+        }
+
+        let currentBatch = [];
+        let batchIndex = 0;
+        let correctCount = 0;
+        let missedWords = [];
+        let currentWord = '';
+        const batchSize = 50;
+        let synth;
+        let currentVoice;
+
+        const elements = {
+            wordDisplay: document.getElementById('wordDisplay'),
+            spellInput: document.getElementById('spellInput'),
+            voiceSelect: document.getElementById('voiceSelect'),
+            ttsStatus: document.getElementById('ttsStatus'),
+            startBatchBtn: document.getElementById('startBatchBtn'),
+            speakBtn: document.getElementById('speakBtn'),
+            checkBtn: document.getElementById('checkBtn'),
+            nextBatchBtn: document.getElementById('nextBatchBtn'),
+            resetBtn: document.getElementById('resetBtn'),
+            feedback: document.getElementById('feedback'),
+            emoji: document.getElementById('emoji'),
+            batchResults: document.getElementById('batchResults'),
+            progress: document.getElementById('progress'),
+            stats: document.getElementById('stats')
+        };
+
+        // Initialize TTS
+        function initTTS() {
+            if ('speechSynthesis' in window) {
+                synth = window.speechSynthesis;
+                populateVoiceList();
+                if (synth.onvoiceschanged !== undefined) {
+                    synth.onvoiceschanged = populateVoiceList;
+                }
+                elements.ttsStatus.innerText = 'TTS ready! Voices loaded.';
+            } else {
+                elements.ttsStatus.innerText = 'TTS not supported in this browser.';
+            }
+        }
+
+        // Populate voice dropdown
+        function populateVoiceList() {
+            elements.voiceSelect.innerHTML = '<option value="">Auto-select voice</option>';
+            const voices = synth.getVoices();
+            voices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                if (voice.name.includes('Zira') || voice.name.includes('Samantha') || voice.lang.startsWith('en-')) {
+                    option.selected = true;
+                }
+                elements.voiceSelect.appendChild(option);
+            });
+            elements.voiceSelect.style.display = voices.length > 0 ? 'inline' : 'none';
+        }
+
+        // Get utterance
+        function getUtterance(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.8; // Slower for clarity
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+
+            const selectedVoiceIndex = elements.voiceSelect.value;
+            if (selectedVoiceIndex !== '') {
+                const voices = synth.getVoices();
+                utterance.voice = voices[selectedVoiceIndex];
+            } else {
+                // Auto-select a good English voice
+                const voices = synth.getVoices();
+                const preferredVoices = voices.filter(voice => 
+                    voice.name.includes('Zira') || 
+                    voice.name.includes('Samantha') || 
+                    voice.name.includes('Google US English') ||
+                    voice.lang.startsWith('en-')
+                );
+                if (preferredVoices.length > 0) {
+                    utterance.voice = preferredVoices[0];
+                }
+            }
+
+            return utterance;
+        }
+
+        // Select word weighted by score
+        function selectWord() {
+            const words = Object.keys(wordScores);
+            const scores = Object.values(wordScores);
+            const totalScore = scores.reduce((a, b) => a + (b + 1), 0);
+            let random = Math.random() * totalScore;
+            for (let i = 0; i < words.length; i++) {
+                random -= (scores[i] + 1);
+                if (random <= 0) {
+                    return words[i];
+                }
+            }
+            return words[0];
+        }
+
+        // Select unique batch
+        function selectBatch() {
+            const batchSet = new Set();
+            while (batchSet.size < Math.min(batchSize, allWords.length)) {
+                const word = selectWord();
+                batchSet.add(word);
+            }
+            return Array.from(batchSet);
+        }
+
+        // Update progress
+        function updateProgress() {
+            const totalWords = allWords.length;
+            const knownWords = Object.values(wordScores).filter(score => score <= 0).length;
+            elements.progress.innerText = `Progress: ${knownWords} / ${totalWords} words mastered!`;
+            const avgScore = (Object.values(wordScores).reduce((a, b) => a + b, 0) / totalWords).toFixed(2);
+            elements.stats.innerText = `Average difficulty score: ${avgScore} (lower is better)`;
+        }
+
+        // Speak word using enhanced Web Speech API
+        function speakWord() {
+            if (synth && currentWord) {
+                // Cancel any ongoing speech
+                synth.cancel();
+                const utterance = getUtterance(currentWord);
+                synth.speak(utterance);
+            }
+        }
+
+        // Start batch
+        elements.startBatchBtn.addEventListener('click', startNewBatch);
+        elements.nextBatchBtn.addEventListener('click', startNewBatch);
+
+        function startNewBatch() {
+            currentBatch = selectBatch();
+            batchIndex = 0;
+            correctCount = 0;
+            missedWords = [];
+            elements.startBatchBtn.style.display = 'none';
+            elements.nextBatchBtn.style.display = 'none';
+            elements.speakBtn.style.display = 'inline';
+            elements.checkBtn.style.display = 'inline';
+            elements.batchResults.innerText = '';
+            nextWordInBatch();
+        }
+
+        // Next word in batch
+        function nextWordInBatch() {
+            if (batchIndex < currentBatch.length) {
+                currentWord = currentBatch[batchIndex];
+                elements.wordDisplay.innerText = `Word ${batchIndex + 1} of ${batchSize}`;
+                elements.spellInput.value = '';
+                elements.feedback.innerText = '';
+                elements.emoji.innerText = '';
+                speakWord();
+                elements.spellInput.focus();
+            } else {
+                showBatchResults();
+            }
+        }
+
+        // Check spelling
+        elements.checkBtn.addEventListener('click', () => {
+            const input = elements.spellInput.value.trim().toLowerCase();
+            const isCorrect = input === currentWord;
+            if (isCorrect) {
+                elements.feedback.innerText = 'Correct! Great job!';
+                elements.feedback.style.color = 'green';
+                elements.emoji.innerText = '🎉';
+                wordScores[currentWord] = Math.max(wordScores[currentWord] - 1, -5);
+                correctCount++;
+            } else {
+                elements.feedback.innerText = `Oops! The correct spelling is "${currentWord.charAt(0).toUpperCase() + currentWord.slice(1)}".`;
+                elements.feedback.style.color = 'red';
+                elements.emoji.innerText = '😔';
+                wordScores[currentWord] = Math.min(wordScores[currentWord] + 1, 10);
+                missedWords.push(currentWord.charAt(0).toUpperCase() + currentWord.slice(1));
+            }
+            saveProgress();
+            updateProgress();
+            batchIndex++;
+            setTimeout(() => {
+                nextWordInBatch();
+            }, 2000);
+        });
+
+        // Show batch results
+        function showBatchResults() {
+            elements.feedback.innerText = '';
+            elements.emoji.innerText = '';
+            elements.wordDisplay.innerText = 'Batch Complete!';
+            elements.batchResults.innerText = `You got ${correctCount}/${batchSize} correct.\nMissed words: ${missedWords.join(', ') || 'None!'}`;
+            elements.speakBtn.style.display = 'none';
+            elements.checkBtn.style.display = 'none';
+            elements.nextBatchBtn.style.display = 'inline';
+        }
+
+        // Repeat current word
+        elements.speakBtn.addEventListener('click', speakWord);
+
+        // Voice change handler
+        elements.voiceSelect.addEventListener('change', () => {
+            currentVoice = elements.voiceSelect.value;
+        });
+
+        // Reset progress
+        elements.resetBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to reset all progress?')) {
+                allWords.forEach(word => {
+                    wordScores[word] = 0;
+                });
+                saveProgress();
+                updateProgress();
+                currentBatch = [];
+                batchIndex = 0;
+                elements.wordDisplay.innerText = 'Progress reset! Press "Start Batch" to begin.';
+                elements.spellInput.value = '';
+                elements.feedback.innerText = '';
+                elements.emoji.innerText = '';
+                elements.batchResults.innerText = '';
+                elements.startBatchBtn.style.display = 'inline';
+                elements.speakBtn.style.display = 'none';
+                elements.checkBtn.style.display = 'none';
+                elements.nextBatchBtn.style.display = 'none';
+            }
+        });
+
+        // Save progress
+        function saveProgress() {
+            localStorage.setItem('spellingBeeScores', JSON.stringify(wordScores));
+        }
+
+        // Enter key to check
+        elements.spellInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter' && currentWord) {
+                elements.checkBtn.click();
+            }
+        });
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            initTTS();
+            updateProgress();
+        });
+    </script>
+</body>
+</html>
