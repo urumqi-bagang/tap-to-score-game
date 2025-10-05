@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Spelling Bee Master Trainer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+        :root {
+            --bg-primary: linear-gradient(135deg, #f0f8ff, #e0f7fa);
+            --bg-secondary: white;
+            --text-primary: #2c3e50;
+            --text-secondary: #7b7b94;
+            --accent-green: linear-gradient(135deg, #4CAF50, #43A047);
+            --accent-blue: linear-gradient(135deg, #2196F3, #1E88E5);
+            --accent-orange: linear-gradient(135deg, #FF9800, #FB8C00);
+            --accent-red: linear-gradient(135deg, #f44336, #e53935);
+            --shadow: 0 10px 34px rgba(0, 0, 0, 0.13);
+            --border-radius: 22px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+        .container {
+            background: var(--bg-secondary);
+            padding: 42px 30px 32px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            max-width: 620px;
+            width: 96%;
+            position: relative;
+            overflow: hidden;
+        }
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(76, 175, 80, 0.05) 0%, transparent 70%);
+            opacity: 0.5;
+            transition: var(--transition);
+        }
+        h1 {
+            color: #4CAF50;
+            font-weight: 900;
+            margin-bottom: 4px;
+            text-align: center;
+            letter-spacing: -0.02em;
+            font-size: 2.5rem;
+        }
+        h2 {
+            font-size: 1.25rem;
+            margin-top: 10px;
+            color: #1976d2;
+            text-align: center;
+            font-weight: 500;
+        }
+        #wordCard {
+            background: var(--bg-secondary);
+            border: 2px solid #e0e0e0;
+            border-radius: 16px;
+            padding: 24px;
+            margin: 18px 0;
+            transform: translateX(0);
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        #wordDisplay {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0 0 10px;
+            color: #2196F3;
+            text-align: center;
+            letter-spacing: 0.05em;
+        }
+        #meaning, #etymology {
+            font-size: 0.95rem;
+            margin: 8px 0;
+            color: var(--text-secondary);
+            text-align: center;
+            line-height: 1.4;
+        }
+        #spellInput {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.25rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+        #spellInput:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76,175,80,0.1);
+            outline: none;
+        }
+        button {
+            padding: 14px 28px;
+            font-size: 1rem;
+            margin: 6px 4px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+            transform: translateY(0);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #startBatchBtn, #speakBtn, #speakMeaningBtn { background: var(--accent-orange); color: white; }
+        #checkBtn { background: var(--accent-green); color: white; }
+        #nextBatchBtn, #redoBatchBtn, #reviewMissedBtn { background: var(--accent-blue); color: white; display: none; }
+        #resetBtn { background: var(--accent-red); color: white; }
+        #ttsStatus {font-size:11px; color:#95a5a6; margin-top:5px; text-align:center;}
+        #feedback {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 12px 0;
+            height: 40px;
+            text-align: center;
+            transition: var(--transition);
+        }
+        #badges {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .emoji { font-size: 3rem; margin: 8px 0; text-align: center; animation: pulse 0.6s ease-in-out; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .progress-container { margin: 20px 0; }
+        .progress-label { font-size: 0.875rem; color: var(--text-primary); margin-bottom: 6px; font-weight: 500; }
+        .progress-bar { width: 100%; height: 12px; background: #e0e0e0; border-radius: 6px; overflow: hidden; }
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-green);
+            width: 0%;
+            transition: width 0.6s ease-out;
+            border-radius: 6px;
+        }
+        #batchResults { margin-top: 20px; font-size: 1.1rem; color: var(--text-primary); text-align: center; }
+        #progress, #stats { font-size: 0.95rem; margin-bottom: 0; color: var(--text-secondary); }
+        #batchSelect { padding: 14px; font-size: 1rem; margin: 6px 4px; border-radius: 12px; border: 2px solid #e0e0e0; background: var(--bg-secondary); color: var(--text-primary); width: auto; }
+        @media (max-width: 480px) {
+            #wordDisplay { font-size: 1.75rem; }
+            h1 { font-size: 2rem; }
+            button { padding: 12px 20px; font-size: 0.95rem; }
+        }
+        /* Micro animations */
+        button:active { transform: scale(0.98); }
+        .progress-fill { animation: progressFill 0.6s ease-out; }
+        @keyframes progressFill { 0% { width: 0%; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Spelling Bee Master Trainer</h1>
+    <h2>Faster mastery with meaning + review</h2>
+    <div id="badges"></div>
+    <p>Practice adaptive spelling, meaning & smart review.<br>Select a batch to start.</p>
+    <select id="batchSelect"></select>
+    <div id="wordDisplay">Loading words...</div>
+    <div id="meaning" style="display:none;"></div> <!-- Hidden -->
+    <div id="etymology"></div>
+    <div id="ttsStatus"></div>
+    <input type="text" id="spellInput" placeholder="Type the spelling here…" autocomplete="off" autofocus />
+    <br />
+    <button id="startBatchBtn" disabled>Start Batch</button>
+    <button id="speakBtn" style="display:none;">🔊 Repeat</button>
+    <button id="speakMeaningBtn" style="display:none;">📖 Hear Meaning</button>
+    <button id="checkBtn" style="display:none;">Check</button>
+    <button id="nextBatchBtn" style="display:none;">Next Batch</button>
+    <button id="redoBatchBtn" style="display:none;">Redo Batch</button>
+    <button id="reviewMissedBtn" style="display:none;">🔁 Smart Review</button>
+    <button id="resetBtn">Reset Progress</button>
+    <div id="feedback"></div>
+    <div class="emoji" id="emoji"></div>
+    <div class="progress-container">
+        <div class="progress-label">Batch Progress</div>
+        <div class="progress-bar"><div id="batchProgress" class="progress-fill" style="width:0%;"></div></div>
+    </div>
+    <div class="progress-container">
+        <div class="progress-label">Overall Mastery</div>
+        <div class="progress-bar"><div id="overallProgress" class="progress-fill" style="width:0%;"></div></div>
+    </div>
+    <div id="batchResults"></div>
+    <div id="progress"></div>
+    <div id="stats"></div>
+</div>
+
+<script>
+let allWords = [];
+let fixedBatches = [];
+let wordRecords = {};
+const batchSize = 30;
+const el = id => document.getElementById(id);
+
+async function loadWords() {
+  try {
+    const response = await fetch('words.json');
+    if (!response.ok) throw new Error('Failed to load words');
+    allWords = await response.json();
+    
+    // Create fixed batches
+    for (let i = 0; i < allWords.length; i += batchSize) {
+      fixedBatches.push(allWords.slice(i, i + batchSize));
+    }
+    
+    // Populate dropdown
+    const batchSelect = el('batchSelect');
+    fixedBatches.forEach((batch, index) => {
+      const option = document.createElement('option');
+      option.value = index;
+      option.textContent = `Batch ${index + 1} (${batch.length} words)`;
+      batchSelect.appendChild(option);
+    });
+
+    // Add random batch option
+    const randomOption = document.createElement('option');
+    randomOption.value = 'random';
+    randomOption.textContent = 'Random Batch (30 words)';
+    batchSelect.appendChild(randomOption);
+    
+    el('wordDisplay').innerText = 'Select a batch and press "Start Batch" to begin.';
+    el('startBatchBtn').disabled = false;
+
+    if (localStorage.getItem('spellingBeeMasterStats')) {
+      wordRecords = JSON.parse(localStorage.getItem('spellingBeeMasterStats'));
+    }
+    allWords.forEach(w => {
+      if (!wordRecords[w]) {
+        wordRecords[w] = { score: 0, seen: 0, streak: 0, lastHit: 0 };
+      }
+    });
+    showProgress();
+  } catch (e) {
+    console.error(e);
+    el('wordDisplay').innerText = 'Error loading words from words.json. Make sure the file exists and you are running on a local server (not file:// protocol).';
+    el('ttsStatus').innerText = 'Load error - see console.';
+  }
+}
+
+let currentAudioSrc = null;
+let currentMeaning = '';
+
+async function fetchWordData(word) {
+  try {
+    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+    if (!response.ok) return { meaning: "No definition found.", phonetic: "", audio: null };
+    const data = await response.json();
+    if (!Array.isArray(data) || data.length === 0) return { meaning: "No definition found.", phonetic: "", audio: null };
+    const firstEntry = data[0];
+    const meaning = firstEntry.meanings?.[0]?.definitions?.[0]?.definition || "No definition found.";
+    const phonetic = firstEntry.phonetics?.find(p => p.text)?.text || "";
+    const audio = firstEntry.phonetics?.find(p => p.audio && p.audio.includes('mp3'))?.audio || null;
+    return { meaning, phonetic, audio };
+  } catch (e) {
+    console.error(`Error fetching data for ${word}:`, e);
+    return { meaning: "No definition found.", phonetic: "", audio: null };
+  }
+}
+
+const demoHints = {
+  apple: { meaning: "A common fruit.", etymology: "Old English æppel, Proto-Germanic *ap(a)laz" },
+  artist: { meaning: "A person who creates art.", etymology: "French artiste < Latin ars" },
+  banana: { meaning: "A long yellow fruit.", etymology: "From Wolof banaana (Senegal)" }
+};
+
+function selectWeightedWord(minGap = 3 * 60 * 1000) {
+  let words = Object.keys(wordRecords).filter(w => Date.now() - wordRecords[w].lastHit >= minGap);
+  if (words.length === 0) words = Object.keys(wordRecords);
+  words.sort((a, b) => wordRecords[b].score - wordRecords[a].score + (Math.random() - 0.5) * 0.4);
+  return words[0] || allWords[Math.floor(Math.random() * allWords.length)];
+}
+
+function selectBatchWords() {
+  let missed = Object.entries(wordRecords).filter(([w, rec]) => rec.score > 0).map(([w]) => w);
+  let pool = [...new Set(missed)];
+  while (pool.length < batchSize && pool.length < allWords.length) {
+    const word = selectWeightedWord();
+    if (!pool.includes(word)) pool.push(word);
+  }
+  return pool.slice(0, batchSize);
+}
+
+function calcMasteredCount() {
+  return Object.values(wordRecords).filter(w => w.score <= 0 && w.seen > 0).length;
+}
+
+function calcAvgScore() {
+  return (Object.values(wordRecords).reduce((a, b) => a + b.score, 0) / allWords.length).toFixed(2);
+}
+
+function getBadge(streak) {
+  if (streak >= 50) return "🏆 Champion!";
+  if (streak >= 20) return "✨ Spelling Star!";
+  if (streak >= 10) return "🔥 Hot Streak!";
+  return "";
+}
+
+function showBadges(streak) {
+  el('badges').innerHTML = streak ? `Current streak: <b>${streak}</b> ${getBadge(streak)}` : "";
+}
+
+let currentBatch = [], batchIndex = 0, correctCount = 0, currentWord = '', missedWords = [], streak = 0;
+let currentBatchIndex = -1; // Track selected fixed batch index
+
+let synth = window.speechSynthesis || {};
+let englishVoices = [];
+
+function initTTS() {
+  setTimeout(() => {
+    englishVoices = synth.getVoices().filter(v => v.lang.startsWith('en'));
+    if (englishVoices.length) {
+      el('ttsStatus').innerText = 'TTS ready.';
+    } else {
+      el('ttsStatus').innerText = 'No English voices available.';
+    }
+  }, 300);
+}
+
+function speakText(text) {
+  if (!synth || !synth.speak) {
+    el('ttsStatus').innerText = 'Text-to-speech not supported.';
+    return;
+  }
+  synth.cancel();
+  if (!englishVoices.length) {
+    el('ttsStatus').innerText = 'No English voices available.';
+    return;
+  }
+  // Prioritize US English female voices like Zira or similar
+  const voice = englishVoices.find(v => v.name === 'Microsoft Zira Desktop - English (United States)') ||
+                englishVoices.find(v => v.name.includes('Zira')) ||
+                englishVoices.find(v => v.name.includes('Google US English')) ||
+                englishVoices.find(v => v.lang === 'en-US' && v.name.toLowerCase().includes('female')) ||
+                englishVoices.find(v => v.lang === 'en-US') ||
+                englishVoices[0];
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.voice = voice;
+  utterance.rate = 0.9; // Slightly slower for meanings
+  utterance.onerror = () => {
+    el('ttsStatus').innerText = 'Error in text-to-speech.';
+  };
+  synth.speak(utterance);
+}
+
+async function showWordDetails(word) {
+  el('etymology').innerText = "";
+  currentAudioSrc = null;
+  currentMeaning = '';
+
+  const wordData = await fetchWordData(word);
+  currentMeaning = wordData.meaning;
+  el('etymology').innerText = wordData.phonetic ? `Phonetic: ${wordData.phonetic}` : "";
+  if (wordData.audio) {
+    currentAudioSrc = wordData.audio;
+  } else if (demoHints[word]) {
+    currentMeaning = demoHints[word].meaning;
+    el('etymology').innerText = demoHints[word].etymology || "";
+  }
+}
+
+function showProgress() {
+  const total = allWords.length;
+  const mastered = calcMasteredCount();
+  el('batchProgress').style.width = ((batchIndex / currentBatch.length) * 100).toFixed(1) + '%'; // Use currentBatch.length
+  el('overallProgress').style.width = ((mastered / total) * 100).toFixed(1) + '%';
+  el('progress').innerText = `Mastered: ${mastered} / ${total} words`;
+  el('stats').innerText = `Average score: ${calcAvgScore()}`;
+}
+
+function saveData() {
+  localStorage.setItem('spellingBeeMasterStats', JSON.stringify(wordRecords));
+}
+
+function setKeyboardMode(enabled) {
+  el('spellInput').disabled = !enabled;
+}
+
+function generateRandomBatch() {
+  // Shuffle allWords and take first batchSize
+  const shuffled = [...allWords].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, batchSize);
+}
+
+function startNewBatch(batchWords) {
+  currentBatch = batchWords;
+  batchIndex = 0; correctCount = 0; missedWords = []; streak = 0;
+  el('batchSelect').style.display = 'none';
+  el('startBatchBtn').style.display = 'none';
+  el('nextBatchBtn').style.display = 'none';
+  el('redoBatchBtn').style.display = 'none';
+  el('reviewMissedBtn').style.display = 'none';
+  el('speakBtn').style.display = 'inline';
+  el('speakMeaningBtn').style.display = 'inline';
+  el('checkBtn').style.display = 'inline';
+  el('batchResults').innerText = '';
+  showBadges(streak);
+  setKeyboardMode(true);
+  nextWord();
+}
+
+async function nextWord() {
+  el('feedback').innerText = "";
+  el('emoji').innerText = "";
+  if (batchIndex < currentBatch.length) {
+    currentWord = currentBatch[batchIndex];
+    el('wordDisplay').innerText = `Word ${batchIndex+1} of ${currentBatch.length}`;
+    el('spellInput').value = '';
+    el('spellInput').focus();
+    await showWordDetails(currentWord);
+    speakText(currentWord);
+    wordRecords[currentWord].lastHit = Date.now();
+    wordRecords[currentWord].seen++;
+  } else {
+    showBatchResults();
+  }
+  showProgress();
+}
+
+function showBatchResults() {
+  el('feedback').innerText = '';
+  el('emoji').innerText = '';
+  el('wordDisplay').innerText = 'Batch Complete!';
+  el('etymology').innerText = '';
+  el('batchResults').innerHTML = `Correct: <b>${correctCount}/${currentBatch.length}</b><br>Missed: ${missedWords.join(', ') || 'None!'}`;
+  el('speakBtn').style.display = 'none';
+  el('speakMeaningBtn').style.display = 'none';
+  el('checkBtn').style.display = 'none';
+  el('nextBatchBtn').style.display = 'inline';
+  el('redoBatchBtn').style.display = 'inline';
+  el('reviewMissedBtn').style.display = missedWords.length ? 'inline' : 'none';
+  el('batchSelect').style.display = 'inline-block';
+  el('startBatchBtn').style.display = 'inline';
+  setKeyboardMode(false);
+  showProgress();
+  saveData();
+}
+
+function checkSpelling() {
+  let input = el('spellInput').value.trim().toLowerCase();
+  let correct = input === currentWord;
+  if (correct) {
+    el('feedback').innerText = "Correct! Great job!";
+    el('feedback').style.color = "green";
+    el('emoji').innerText = "🎉";
+    wordRecords[currentWord].score = Math.max(wordRecords[currentWord].score - 1, -5);
+    wordRecords[currentWord].streak = (wordRecords[currentWord].streak || 0) + 1;
+    streak++;
+    correctCount++;
+    showBadges(streak);
+  } else {
+    el('feedback').innerText = `Oops! Correct is "${currentWord}".`;
+    el('feedback').style.color = "red";
+    el('emoji').innerText = "😔";
+    wordRecords[currentWord].score = Math.min(wordRecords[currentWord].score + 2, 10);
+    wordRecords[currentWord].streak = 0;
+    streak = 0;
+    if (!missedWords.includes(currentWord)) missedWords.push(currentWord);
+    showBadges(streak);
+  }
+  saveData();
+  batchIndex++;
+  setTimeout(nextWord, 1320);
+}
+
+el('startBatchBtn').onclick = () => {
+  const selectedValue = el('batchSelect').value;
+  let batchWords;
+  if (selectedValue === 'random') {
+    batchWords = generateRandomBatch();
+    currentBatchIndex = 'random';
+  } else {
+    currentBatchIndex = selectedValue;
+    batchWords = fixedBatches[selectedValue];
+  }
+  startNewBatch(batchWords);
+};
+el('nextBatchBtn').onclick = () => {
+  let nextIndex;
+  if (currentBatchIndex === 'random') {
+    nextIndex = 0; // Start from first fixed batch if previous was random
+  } else {
+    nextIndex = (parseInt(currentBatchIndex) + 1) % fixedBatches.length;
+  }
+  el('batchSelect').value = nextIndex;
+  startNewBatch(fixedBatches[nextIndex]);
+};
+el('redoBatchBtn').onclick = () => {
+  if (currentBatchIndex === 'random') {
+    startNewBatch(generateRandomBatch());
+  } else {
+    startNewBatch(currentBatch);
+  }
+};
+el('reviewMissedBtn').onclick = () => startNewBatch(missedWords.slice());
+el('speakBtn').onclick = () => {
+  if (currentAudioSrc) {
+    let audio = new Audio(currentAudioSrc);
+    audio.play();
+  } else {
+    speakText(currentWord);
+  }
+};
+el('speakMeaningBtn').onclick = () => speakText(currentMeaning);
+el('checkBtn').onclick = checkSpelling;
+
+el('spellInput').addEventListener('keyup', e => { if (e.key === 'Enter') checkSpelling(); });
+
+el('resetBtn').onclick = () => {
+  if (confirm('Reset all stats/progress?')) {
+    allWords.forEach(w => {
+      wordRecords[w] = { score: 0, seen: 0, streak: 0, lastHit: 0 };
+    });
+    saveData();
+    showProgress();
+    el('wordDisplay').innerText = 'Progress reset! Select a batch to begin.';
+    el('feedback').innerText = el('emoji').innerText = '';
+    el('batchResults').innerText = '';
+    el('startBatchBtn').style.display = 'inline';
+    el('batchSelect').style.display = 'inline-block';
+    el('speakBtn').style.display = el('checkBtn').style.display = el('speakMeaningBtn').style.display = 'none';
+    el('nextBatchBtn').style.display = el('redoBatchBtn').style.display = el('reviewMissedBtn').style.display = 'none';
+  }
+}
+
+window.addEventListener('load', () => {
+  initTTS();
+  loadWords();
+  setKeyboardMode(false);
+});
+</script>
+</body>
+</html>
